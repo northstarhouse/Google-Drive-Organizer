@@ -1,0 +1,5 @@
+{
+  "name": "Copy of DriveSort AI",
+  "description": "Intelligently organize your photos using Gemini. Upload images to automatically sort them into albums based on dates and AI-analyzed content.",
+  "requestFramePermissions": []
+}
