@@ -1,4 +1,5 @@
 import { Photo } from "../types";
+import { generateId } from "../utils";
 
 // This simulates the Google Drive Picker API interaction
 export const importFromGoogleDrive = async (): Promise<Photo[]> => {
@@ -9,8 +10,6 @@ export const importFromGoogleDrive = async (): Promise<Photo[]> => {
   // 1. Unique photos
   // 2. Exact duplicates (same photo content/date/size, different ID)
   // 3. Name conflicts (copy of...)
-  
-  const baseDate = new Date();
   
   const drivePhotos: Array<Partial<Photo>> = [
     {
@@ -58,7 +57,7 @@ export const importFromGoogleDrive = async (): Promise<Photo[]> => {
   ];
 
   return drivePhotos.map(p => ({
-    id: crypto.randomUUID(),
+    id: generateId(),
     file: undefined, // Drive files don't have a File object initially
     url: p.url!,
     name: p.name!,

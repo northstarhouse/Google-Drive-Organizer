@@ -1,9 +1,16 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AIAnalysis } from "../types";
 
-// Initialize Gemini
-// Note: process.env.API_KEY is injected by the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to safely get the API key
+const getApiKey = () => {
+  // Check if process is defined (it might not be in pure browser envs)
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // If no key is found, we can't initialize. 
+  // We'll throw at call time rather than load time to allow UI to render.
+  return ""; 
+};
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -32,7 +39,14 @@ const analysisSchema: Schema = {
 
 export const analyzeImageContent = async (base64Data: string, mimeType: string): Promise<AIAnalysis> => {
   try {
-    const modelId = "gemini-2.5-flash"; // Efficient for high-volume image tasks
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error("API_KEY is missing from environment variables.");
+    }
+
+    // Initialize lazily to prevent top-level crashes
+    const ai = new GoogleGenAI({ apiKey });
+    const modelId = "gemini-2.5-flash";
 
     const response = await ai.models.generateContent({
       model: modelId,
@@ -52,7 +66,7 @@ export const analyzeImageContent = async (base64Data: string, mimeType: string):
       config: {
         responseMimeType: "application/json",
         responseSchema: analysisSchema,
-        temperature: 0.4, // Lower temperature for more consistent categorization
+        temperature: 0.4,
       },
     });
 
@@ -62,11 +76,10 @@ export const analyzeImageContent = async (base64Data: string, mimeType: string):
     return JSON.parse(text) as AIAnalysis;
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
-    // Return a fallback so the app doesn't crash, but mark it generic
     return {
       category: "Uncategorized",
       tags: [],
-      summary: "Could not analyze image.",
+      summary: "Analysis failed or pending config.",
       season: "Indoor/Unknown",
     };
   }

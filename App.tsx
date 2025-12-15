@@ -4,7 +4,7 @@ import { PhotoCard } from './components/PhotoCard';
 import { DuplicateReview } from './components/DuplicateReview';
 import { Icons } from './components/Icon';
 import { Photo, Album, DuplicateGroup } from './types';
-import { fileToBase64, urlToBase64, getMonthYear, findDuplicates } from './utils';
+import { fileToBase64, urlToBase64, getMonthYear, findDuplicates, generateId } from './utils';
 import { analyzeImageContent } from './services/gemini';
 import { importFromGoogleDrive } from './services/drive';
 
@@ -30,7 +30,7 @@ const App: React.FC = () => {
       if (!file.type.startsWith('image/')) return;
 
       const photo: Photo = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         file,
         url: URL.createObjectURL(file),
         name: file.name,
