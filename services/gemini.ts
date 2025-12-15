@@ -1,86 +1,58 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AIAnalysis } from "../types";
 
-// Helper to safely get the API key
-const getApiKey = () => {
-  // Check if process is defined (it might not be in pure browser envs)
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    return process.env.API_KEY;
-  }
-  // If no key is found, we can't initialize. 
-  // We'll throw at call time rather than load time to allow UI to render.
-  return ""; 
+// Simple client-side categorization based on filename patterns
+const categorizeByFilename = (filename: string): string => {
+  const lower = filename.toLowerCase();
+
+  if (/(screenshot|screen|capture)/i.test(lower)) return "Screenshots";
+  if (/(photo|img|pic|image)/i.test(lower)) return "Photos";
+  if (/(document|doc|scan|pdf)/i.test(lower)) return "Documents";
+  if (/(download|dwnld)/i.test(lower)) return "Downloads";
+  if (/(selfie|portrait)/i.test(lower)) return "Selfies";
+  if (/(vacation|travel|trip)/i.test(lower)) return "Travel";
+  if (/(food|meal|recipe)/i.test(lower)) return "Food";
+  if (/(pet|dog|cat)/i.test(lower)) return "Pets";
+
+  return "Photos";
 };
 
-const analysisSchema: Schema = {
-  type: Type.OBJECT,
-  properties: {
-    category: {
-      type: Type.STRING,
-      description: "A single broad category for the image (e.g., Nature, People, Food, Architecture, Pets, Documents, Tech, Abstract).",
-    },
-    tags: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
-      description: "3-5 specific keywords describing the image content.",
-    },
-    summary: {
-      type: Type.STRING,
-      description: "A very brief, one-sentence caption of the image.",
-    },
-    season: {
-      type: Type.STRING,
-      enum: ["Spring", "Summer", "Autumn", "Winter", "Indoor/Unknown"],
-      description: "Estimated season based on visual cues, or Indoor/Unknown if not applicable.",
-    },
-  },
-  required: ["category", "tags", "summary"],
+// Extract basic tags from filename
+const extractTags = (filename: string): string[] => {
+  const tags: string[] = [];
+  const lower = filename.toLowerCase();
+
+  if (/screenshot/i.test(lower)) tags.push("screenshot");
+  if (/\d{8}/.test(filename)) tags.push("dated");
+  if (/(vacation|travel)/i.test(lower)) tags.push("travel");
+  if (/(selfie|portrait)/i.test(lower)) tags.push("portrait");
+
+  return tags.length > 0 ? tags : ["photo"];
 };
 
 export const analyzeImageContent = async (base64Data: string, mimeType: string): Promise<AIAnalysis> => {
-  try {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      throw new Error("API_KEY is missing from environment variables.");
-    }
+  // Simulate async processing
+  await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Initialize lazily to prevent top-level crashes
-    const ai = new GoogleGenAI({ apiKey });
-    const modelId = "gemini-2.5-flash";
+  return {
+    category: "Photos",
+    tags: ["photo"],
+    summary: "Photo uploaded",
+    season: "Unknown",
+  };
+};
 
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data,
-            },
-          },
-          {
-            text: "Analyze this image for a photo organization app. Classify it into a broad category and provide specific tags.",
-          },
-        ],
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: analysisSchema,
-        temperature: 0.4,
-      },
-    });
+// New function that uses filename for categorization
+export const analyzeImageFromFile = async (file: File): Promise<AIAnalysis> => {
+  // Simulate async processing
+  await new Promise(resolve => setTimeout(resolve, 50));
 
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
+  const category = categorizeByFilename(file.name);
+  const tags = extractTags(file.name);
 
-    return JSON.parse(text) as AIAnalysis;
-  } catch (error) {
-    console.error("Gemini Analysis Error:", error);
-    return {
-      category: "Uncategorized",
-      tags: [],
-      summary: "Analysis failed or pending config.",
-      season: "Indoor/Unknown",
-    };
-  }
+  return {
+    category,
+    tags,
+    summary: `${category} - ${file.name}`,
+    season: "Unknown",
+  };
 };

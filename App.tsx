@@ -5,8 +5,7 @@ import { DuplicateReview } from './components/DuplicateReview';
 import { Icons } from './components/Icon';
 import { Photo, Album, DuplicateGroup } from './types';
 import { fileToBase64, urlToBase64, getMonthYear, findDuplicates, generateId } from './utils';
-import { analyzeImageContent } from './services/gemini';
-import { importFromGoogleDrive } from './services/drive';
+import { analyzeImageFromFile } from './services/gemini';
 
 const App: React.FC = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -49,22 +48,6 @@ const App: React.FC = () => {
     newPhotos.forEach(p => processPhoto(p));
   };
 
-  const handleDriveImport = async () => {
-    setIsUploading(true);
-    try {
-      // Simulate OAuth/Picker flow
-      const drivePhotos = await importFromGoogleDrive();
-      setPhotos(prev => [...prev, ...drivePhotos]);
-      
-      // Process newly imported photos
-      drivePhotos.forEach(p => processPhoto(p));
-    } catch (error) {
-      console.error("Drive import failed", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const processPhoto = async (photo: Photo) => {
     if (processingQueueRef.current.includes(photo.id)) return;
     processingQueueRef.current.push(photo.id);
@@ -72,23 +55,15 @@ const App: React.FC = () => {
     setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'analyzing' } : p));
 
     try {
-      let base64 = "";
-      let mimeType = "image/jpeg"; // Default fallback
-
-      if (photo.file) {
-        base64 = await fileToBase64(photo.file);
-        mimeType = photo.file.type;
-      } else {
-        // Drive import gives URL, fetch blob then convert
-        base64 = await urlToBase64(photo.url);
-        // mimeType stays default or could be inferred from url extension
+      if (!photo.file) {
+        throw new Error("No file available for processing");
       }
-      
-      const analysis = await analyzeImageContent(base64, mimeType);
 
-      setPhotos(prev => prev.map(p => 
-        p.id === photo.id 
-          ? { ...p, status: 'done', analysis } 
+      const analysis = await analyzeImageFromFile(photo.file);
+
+      setPhotos(prev => prev.map(p =>
+        p.id === photo.id
+          ? { ...p, status: 'done', analysis }
           : p
       ));
       setAnalyzedCount(c => c + 1);
@@ -217,26 +192,16 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-             {/* Drive Import Button */}
-             <button
-               onClick={handleDriveImport}
-               disabled={isUploading}
-               className="flex items-center gap-2 bg-white text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-lg transition-colors font-medium text-sm border border-slate-200"
-             >
-               {isUploading ? <Icons.Spinner className="w-4 h-4 animate-spin text-slate-600" /> : <Icons.GoogleDrive className="w-4 h-4" />}
-               <span>Import from Drive</span>
-             </button>
-             
              {/* Local Upload Button */}
              <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-lg shadow-blue-900/20 font-medium text-sm">
                 {isUploading ? <Icons.Spinner className="w-4 h-4 animate-spin" /> : <Icons.Upload className="w-4 h-4" />}
-                <span>Upload</span>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  onChange={handleFileUpload} 
-                  className="hidden" 
+                <span>Upload Photos</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
                   disabled={isUploading}
                 />
              </label>
@@ -259,13 +224,13 @@ const App: React.FC = () => {
                         <Icons.Image className="w-10 h-10 opacity-50" />
                     </div>
                     <div className="text-center max-w-md">
-                        <h3 className="text-lg font-medium text-slate-300 mb-2">Your Smart Gallery is Empty</h3>
+                        <h3 className="text-lg font-medium text-slate-300 mb-2">Your Photo Gallery is Empty</h3>
                         <p className="text-sm leading-relaxed mb-6">
-                            Import photos to start. DriveSort AI will organize them by date and content, and help you clean up duplicates.
+                            Upload photos to start. Your photos will be organized by date and content, and duplicates will be automatically detected.
                         </p>
-                        <button onClick={handleDriveImport} className="text-blue-400 hover:text-blue-300 underline text-sm">
-                            Try "Import from Drive" for a demo
-                        </button>
+                        <p className="text-xs text-slate-600">
+                            All processing happens locally in your browser. No data is sent to any server.
+                        </p>
                     </div>
                 </div>
                ) : (
