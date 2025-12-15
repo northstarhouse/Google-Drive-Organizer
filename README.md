@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Photo Organizer
 
-# Run and deploy your AI Studio app
+A simple, privacy-focused photo organizer that runs entirely in your browser. Upload photos and they'll be automatically organized by date and categorized by content. Duplicate detection helps you clean up your photo library.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1uY2KdASUwqlybUqXpvOAVx2kSThSaH5O
+- 📸 **Local Processing** - All processing happens in your browser, no data sent to servers
+- 📅 **Date-based Organization** - Photos automatically grouped by month/year
+- 🏷️ **Smart Categorization** - Photos categorized based on filename patterns
+- 🔍 **Duplicate Detection** - Find and remove duplicate photos
+- 🎨 **Modern UI** - Clean, dark-mode interface
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open http://localhost:3000 in your browser
+
+## Deploy
+
+This app is configured to automatically deploy to GitHub Pages. Simply push to the main branch and GitHub Actions will build and deploy your app.
