@@ -53,25 +53,70 @@ export const DuplicateReview: React.FC<DuplicateReviewProps> = ({ duplicates, on
             <div className="p-4 overflow-x-auto">
               <div className="flex gap-4">
                 {group.photos.map(photo => (
-                  <div key={photo.id} className="min-w-[200px] w-[200px] flex flex-col gap-3">
-                    <div className="relative aspect-square rounded-lg overflow-hidden border-2 border-slate-600 group hover:border-blue-500 transition-colors">
+                  <div key={photo.id} className="min-w-[220px] w-[220px] flex flex-col bg-slate-900 rounded-lg border border-slate-800 p-3">
+                    
+                    {/* Image */}
+                    <div className="relative aspect-square rounded-md overflow-hidden bg-slate-800 mb-3 border border-slate-700">
                       <img src={photo.url} className="w-full h-full object-cover" alt="duplicate candidate" />
-                      {photo.source === 'drive' && (
-                        <div className="absolute top-2 left-2 bg-slate-900/80 p-1 rounded shadow-sm" title="From Google Drive">
-                          <Icons.GoogleDrive className="w-3 h-3" />
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2 text-[10px] text-white truncate">
-                        {photo.name}
+                      {/* Source Icon overlay */}
+                      <div className="absolute top-2 left-2 shadow-sm">
+                         {photo.source === 'drive' ? (
+                            <div className="bg-[#0f172a]/90 text-white p-1.5 rounded-md backdrop-blur-sm border border-slate-700/50" title="From Google Drive">
+                                <Icons.GoogleDrive className="w-3.5 h-3.5" />
+                            </div>
+                         ) : (
+                            <div className="bg-slate-700/90 text-slate-200 p-1.5 rounded-md backdrop-blur-sm border border-slate-600/50" title="From Local Device">
+                                <Icons.Upload className="w-3.5 h-3.5" />
+                            </div>
+                         )}
                       </div>
                     </div>
                     
+                    {/* Metadata */}
+                    <div className="space-y-2 mb-4 flex-1">
+                        {/* Source Label */}
+                        <div className="flex items-center gap-2">
+                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${
+                                 photo.source === 'drive' 
+                                 ? 'bg-blue-900/30 text-blue-300 border-blue-800/50' 
+                                 : 'bg-slate-800 text-slate-400 border-slate-700'
+                             }`}>
+                                {photo.source === 'drive' ? 'Drive Import' : 'Local Upload'}
+                             </span>
+                        </div>
+
+                        {/* Category/AI Data */}
+                        {photo.status === 'done' && photo.analysis ? (
+                           <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium">
+                                    <Icons.Tag className="w-3 h-3 text-blue-400" />
+                                    <span>{photo.analysis.category}</span>
+                                </div>
+                                <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">
+                                    {photo.analysis.summary}
+                                </p>
+                           </div>
+                        ) : (
+                             <div className="flex items-center gap-2 py-1">
+                                <Icons.Spinner className="w-3 h-3 text-slate-500 animate-spin" />
+                                <span className="text-xs text-slate-500">Analyzing content...</span>
+                             </div>
+                        )}
+
+                        {/* Filename */}
+                         <div className="pt-2 border-t border-slate-800/50">
+                            <p className="text-[10px] text-slate-600 truncate font-mono" title={photo.name}>
+                                {photo.name}
+                            </p>
+                        </div>
+                    </div>
+
                     <button
                       onClick={() => onResolve(group.id, photo.id)}
-                      className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-2 px-3 bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-300 text-xs font-semibold rounded-lg transition-all border border-slate-700 hover:border-emerald-500/50 flex items-center justify-center gap-2 shadow-sm group/btn"
                     >
-                      <Icons.Check className="w-3 h-3" />
-                      Keep This One
+                      <Icons.Check className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
+                      Keep This Copy
                     </button>
                   </div>
                 ))}
